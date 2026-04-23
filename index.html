@@ -100,7 +100,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="divider">Rapports</div>
   <div id="rList"></div>
   <button class="btn btn-primary" id="bNew" style="margin-top:8px">+ Nouveau rapport d'audit</button>
-  <div style="text-align:center;margin-top:20px;font-size:11px;color:var(--muted);">v1.0.6</div>
+  <div style="text-align:center;margin-top:20px;font-size:11px;color:var(--muted);">v1.0.7</div>
 </div>
 
 <!-- ÉDITION RAPPORT -->
@@ -412,21 +412,62 @@ function renderSits(){
       +'<span class="tbadge '+(s.type==='particuliere'?'tp':'tt')+'">'+(s.type==='particuliere'?'Particulière':'Travail')+'</span>'
       +'</div>'
       +(s.risk?'<span class="rpill r'+s.risk[0]+'">'+RL[s.risk]+'</span>':'')
-      +'<div style="margin-top:8px"><button class="btn btn-danger btn-sm" data-i="'+i+'" type="button">Supprimer</button></div>'
+      +'<div style="margin-top:8px;display:flex;gap:8px;">'
+      +'<button class="btn btn-outline btn-sm" data-e="'+i+'" type="button">Modifier</button>'
+      +'<button class="btn btn-danger btn-sm" data-i="'+i+'" type="button">Supprimer</button>'
+      +'</div>'
       +'</div>';
   }
   el.innerHTML=h;
   el.querySelectorAll('[data-i]').forEach(function(b){
     b.addEventListener('click',function(){curSits.splice(+b.dataset.i,1);renderSits();});
   });
+  el.querySelectorAll('[data-e]').forEach(function(b){
+    b.addEventListener('click',function(){openSitModal(+b.dataset.e);});
+  });
 }
 
-function openSitModal(){
+var editSitIdx=null;
+
+function openSitModal(idx){
   curPhoto=null;curRisk=null;
+  editSitIdx=(idx!==undefined)?idx:null;
   ['mTitre','mTache','mDesc','mRisques','mFreq','mDescP','mConseq','mPreco'].forEach(function(id){D.getElementById(id).value='';});
   D.getElementById('mType').value='travail';
-  resetPhotoZone();
   D.querySelectorAll('.risk-btn').forEach(function(b){b.classList.remove('active');});
+
+  // Si on édite une situation existante, on pré-remplit
+  if(editSitIdx!==null){
+    var s=curSits[editSitIdx];
+    D.getElementById('mType').value=s.type||'travail';
+    D.getElementById('mTitre').value=s.titre||'';
+    D.getElementById('mPreco').value=s.preconisations||'';
+    if(s.type==='travail'){
+      D.getElementById('mTache').value=s.tache||'';
+      D.getElementById('mDesc').value=s.description||'';
+      D.getElementById('mRisques').value=s.risques||'';
+      D.getElementById('mFreq').value=s.frequence||'';
+    } else {
+      D.getElementById('mDescP').value=s.description||'';
+      D.getElementById('mConseq').value=s.consequences||'';
+    }
+    if(s.risk){
+      var activeBtn=D.querySelector('#rb'+(s.type==='travail'?'T':'P')+' [data-r="'+s.risk+'"]');
+      if(activeBtn)activeBtn.classList.add('active');
+      curRisk=s.risk;
+    }
+    if(s.photo){
+      curPhoto=s.photo;
+      D.getElementById('pZone').innerHTML='<img src="'+s.photo+'"><input id="pInput" type="file" accept="image/*" capture="environment">';
+      D.getElementById('pInput').addEventListener('change',handlePhoto);
+    } else {
+      resetPhotoZone();
+    }
+    D.querySelector('#sitModal .mtitle').textContent='Modifier la situation';
+  } else {
+    resetPhotoZone();
+    D.querySelector('#sitModal .mtitle').textContent='Nouvelle situation';
+  }
   toggleSitType();
   D.getElementById('sitModal').classList.add('open');
 }
@@ -448,9 +489,11 @@ function doAddSit(){
   var s={type:type,titre:D.getElementById('mTitre').value,photo:curPhoto,preconisations:D.getElementById('mPreco').value,risk:curRisk};
   if(type==='travail'){s.tache=D.getElementById('mTache').value;s.description=D.getElementById('mDesc').value;s.risques=D.getElementById('mRisques').value;s.frequence=D.getElementById('mFreq').value;}
   else{s.description=D.getElementById('mDescP').value;s.consequences=D.getElementById('mConseq').value;}
-  curSits.push(s);renderSits();
+  if(editSitIdx!==null){curSits[editSitIdx]=s;showToast('Situation modifiée ✓');}
+  else{curSits.push(s);showToast('Situation ajoutée ✓');}
+  editSitIdx=null;
+  renderSits();
   D.getElementById('sitModal').classList.remove('open');
-  showToast('Situation ajoutée ✓');
 }
 
 // ── PHOTO ────────────────────────────────────────────────────
@@ -578,7 +621,7 @@ D.getElementById('bSave').addEventListener('click',doSave);
 D.getElementById('bEdit').addEventListener('click',startEdit);
 D.getElementById('bPrint').addEventListener('click',doPrint);
 D.getElementById('bDelCur').addEventListener('click',function(){askDel(viewIdx);});
-D.getElementById('bAddSit').addEventListener('click',openSitModal);
+D.getElementById('bAddSit').addEventListener('click',function(){openSitModal();});
 D.getElementById('bCancelSit').addEventListener('click',function(){D.getElementById('sitModal').classList.remove('open');});
 D.getElementById('bOkSit').addEventListener('click',doAddSit);
 D.getElementById('mType').addEventListener('change',toggleSitType);
