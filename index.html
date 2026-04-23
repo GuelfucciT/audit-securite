@@ -90,7 +90,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="divider">Rapports</div>
   <div id="rList"></div>
   <button class="btn btn-primary" id="bNew" style="margin-top:8px">+ Nouveau rapport d'audit</button>
-  <div style="text-align:center;margin-top:20px;font-size:11px;color:var(--muted);">v1.0.0</div>
+  <div style="text-align:center;margin-top:20px;font-size:11px;color:var(--muted);">v1.0.1</div>
 </div>
 
 <div class="screen" id="sReport">
@@ -105,7 +105,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <button class="btn btn-primary" id="bSave">Enregistrer le rapport</button>
 </div>
 
-<div class="screen" id="sView">
+<div class="screen" id="sPreview">
+  <div style="display:flex;gap:10px;margin-bottom:12px">
+    <button class="btn btn-outline" id="bBackPreview" style="flex:1">← Retour</button>
+    <button class="btn btn-primary" id="bPrintPreview" style="flex:1">🖨 Imprimer / PDF</button>
+  </div>
+  <div id="previewContent"></div>
+</div>
   <div id="vContent"></div>
   <div style="display:flex;gap:10px;margin-top:8px">
     <button class="btn btn-outline" id="bEdit" style="flex:1">Modifier</button>
@@ -223,10 +229,10 @@ var RC={faible:'#1a7a3a',moyen:'#d46b00',eleve:'#c0392b'};
 var RB={faible:'#d4edda',moyen:'#fde9cc',eleve:'#fcd9d7'};
 
 function show(n){
-  ['Home','Report','View'].forEach(function(x){_d.getElementById('s'+x).classList.remove('active');});
+  ['Home','Report','View','Preview'].forEach(function(x){_d.getElementById('s'+x).classList.remove('active');});
   ['nHome','nNew','nExport'].forEach(function(x){_d.getElementById(x).classList.remove('active');});
   _d.getElementById('s'+n).classList.add('active');
-  var titles={Home:'Audit Sécurité',Report:editIdx!==null?'Modifier':'Nouveau rapport',View:(reports[viewIdx]&&reports[viewIdx].secteur)||'Rapport'};
+  var titles={Home:'Audit Sécurité',Report:editIdx!==null?'Modifier':'Nouveau rapport',View:(reports[viewIdx]&&reports[viewIdx].secteur)||'Rapport',Preview:'Aperçu PDF'};
   _d.getElementById('hTitle').textContent=titles[n]||'Audit Sécurité';
   if(n==='Home'){_d.getElementById('nHome').classList.add('active');renderList();}
   if(n==='Report')_d.getElementById('nNew').classList.add('active');
@@ -504,6 +510,8 @@ function showToast(msg){
 }
 
 // Boutons
+_d.getElementById('bBackPreview').addEventListener('click',function(){show('View');});
+_d.getElementById('bPrintPreview').addEventListener('click',function(){window.print();});
 _d.getElementById('bNew').addEventListener('click',startNew);
 _d.getElementById('nNew').addEventListener('click',startNew);
 _d.getElementById('nHome').addEventListener('click',function(){show('Home');});
